@@ -1,25 +1,38 @@
 # server/app.py
+#!/usr/bin/env python3
 
-from flask import Flask
+from flask import Flask, make_response, jsonify
 from flask_migrate import Migrate
 
-from models import db
+from models import db, Earthquake
 
-# create a Flask application instance 
 app = Flask(__name__)
-
-# configure the database connection to the local file app.db
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-
-# configure flag to disable modification tracking and use less memory
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.json.compact = False
 
-# create a Migrate object to manage schema modifications
 migrate = Migrate(app, db)
-
-# initialize the Flask application to use the database
 db.init_app(app)
 
+
+@app.route('/')
+def index():
+    body = {'message': 'Flask SQLAlchemy Lab 1'}
+    return make_response(body, 200)
+
+# Add views here
+@app.route('/earthquakes/<int:id>',methods=['GET'])
+def get_earthquake_by_id(id):
+    earthquake = Earthquake.query.get(id)
+    if earthquake:
+        return jsonify({
+            "id":earthquake.id,
+            "location":earthquake.location,
+            "magnitude":earthquake.magnitude,
+            "year":earthquake.year
+        }),200
+    else:
+        return jsonify({"message":f"Earthquake {id} not found."}),404
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
